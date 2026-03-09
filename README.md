@@ -58,7 +58,7 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 - Docker e Docker Compose
 - Yarn ou npm
 
-## Como rodar localmente (sem Docker para a API)
+## Como rodar localmente
 
 1. Instalar dependências:
 
