@@ -16,6 +16,8 @@ export function registerCreateOrderRoute(
     '/order',
     {
       schema: {
+        tags: ['Orders'],
+        summary: 'Create a new order',
         body: createOrderBodySchema,
       },
       attachValidation: true,

@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import fastifyPostgres from '@fastify/postgres';
 
 import { getDatabaseOptions } from './database/index.js';
+import { registerDocs } from './docs/index.js';
 import { setErrorHandlers } from './errors/error-handler.js';
 import { registerRoutes } from './routes/index.js';
 
@@ -14,6 +15,8 @@ export function buildApp() {
 
   // Registrar o plugin de conexao com o banco de dados no escopo raiz
   void app.register(fastifyPostgres, getDatabaseOptions());
+  // Registrar OpenAPI/Swagger
+  registerDocs(app);
   // Configurar os manipuladores de erros
   setErrorHandlers(app);
   // Registrar as rotas

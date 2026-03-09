@@ -20,6 +20,8 @@ export function registerUpdateOrderRoute(
     '/order/:orderId',
     {
       schema: {
+        tags: ['Orders'],
+        summary: 'Update an existing order',
         params: orderParamsSchema,
         body: updateOrderBodySchema,
       },

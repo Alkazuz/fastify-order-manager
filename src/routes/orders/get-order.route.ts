@@ -15,6 +15,8 @@ export function registerGetOrderRoute(
     '/order/:orderId',
     {
       schema: {
+        tags: ['Orders'],
+        summary: 'Get order by identifier',
         params: orderParamsSchema,
       },
       attachValidation: true,

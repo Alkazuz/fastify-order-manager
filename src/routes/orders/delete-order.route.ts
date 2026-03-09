@@ -15,6 +15,8 @@ export function registerDeleteOrderRoute(
     '/order/:orderId',
     {
       schema: {
+        tags: ['Orders'],
+        summary: 'Delete order by identifier',
         params: orderParamsSchema,
       },
       attachValidation: true,
