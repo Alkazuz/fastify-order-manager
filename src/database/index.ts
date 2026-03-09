@@ -1,6 +1,3 @@
-import fastifyPostgres from '@fastify/postgres';
-import type { FastifyPluginAsync } from 'fastify';
-
 // Montar a connection string a partir do .env ou de valores padrao locais
 function getConnectionString(): string {
   return (
@@ -9,9 +6,8 @@ function getConnectionString(): string {
   );
 }
 
-// Registrar o plugin oficial do Fastify para conexao com Postgres
-export const registerDatabase: FastifyPluginAsync = async (app) => {
-  await app.register(fastifyPostgres, {
+export function getDatabaseOptions() {
+  return {
     connectionString: getConnectionString(),
-  });
-};
+  };
+}
