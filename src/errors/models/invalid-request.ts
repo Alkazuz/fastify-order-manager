@@ -41,6 +41,28 @@ function getPropertyName(error: FastifySchemaValidationError): string | null {
   return null;
 }
 
+function isFastifySchemaValidationError(
+  value: unknown,
+): value is FastifySchemaValidationError {
+  console.log('Validating error:', value);
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'keyword' in value &&
+    'instancePath' in value &&
+    'schemaPath' in value &&
+    'params' in value
+  );
+}
+
+function getValidationErrors(value: unknown): FastifySchemaValidationError[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isFastifySchemaValidationError);
+}
+
 export function mapValidationErrors(
   errors: FastifySchemaValidationError[],
 ): InvalidRequestDetail[] {
@@ -74,5 +96,11 @@ export class InvalidRequestError extends AppError {
     errors: FastifySchemaValidationError[],
   ): InvalidRequestError {
     return new InvalidRequestError(mapValidationErrors(errors));
+  }
+
+  static fromFastifyValidation(validation: unknown): InvalidRequestError {
+    return InvalidRequestError.fromValidationErrors(
+      getValidationErrors(validation),
+    );
   }
 }
