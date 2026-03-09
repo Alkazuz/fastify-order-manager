@@ -10,6 +10,15 @@ export function registerDocs(app: FastifyInstance): void {
         description: 'API for order management operations.',
         version: '1.0.0',
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
       servers: [
         {
           url: 'http://localhost:3000',
@@ -24,6 +33,10 @@ export function registerDocs(app: FastifyInstance): void {
         {
           name: 'Health',
           description: 'Application health and readiness endpoints.',
+        },
+        {
+          name: 'Auth',
+          description: 'Authentication endpoints.',
         },
         {
           name: 'Orders',
