@@ -22,9 +22,16 @@ export const updateOrderBodySchema = {
         required: ['idItem', 'quantidadeItem', 'valorItem'],
         properties: {
           idItem: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 64,
+            anyOf: [
+              {
+                type: 'string',
+                pattern: '^[0-9]+$',
+              },
+              {
+                type: 'integer',
+                minimum: 1,
+              },
+            ],
           },
           quantidadeItem: {
             type: 'integer',
@@ -41,7 +48,7 @@ export const updateOrderBodySchema = {
 } as const;
 
 export interface UpdateOrderBodyItem {
-  idItem: string;
+  idItem: string | number;
   quantidadeItem: number;
   valorItem: number;
 }
@@ -59,7 +66,7 @@ export function mapUpdateOrderBodyToInput(
     value: body.valorTotal,
     creationDate: new Date(body.dataCriacao),
     items: body.items.map((item) => ({
-      productId: item.idItem,
+      productId: Number(item.idItem),
       quantity: item.quantidadeItem,
       price: item.valorItem,
     })),
