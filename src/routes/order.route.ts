@@ -1,42 +1,21 @@
 import type { FastifyPluginCallback } from 'fastify';
 
-import { InvalidRequestError } from '../errors/models/invalid-request.js';
 import { OrderService } from '../modules/orders/order.service.js';
-import {
-  createOrderBodySchema,
-  mapCreateOrderBodyToInput,
-  type CreateOrderBody,
-} from '../modules/orders/validators/create-order.body.validator.js';
+import { registerCreateOrderRoute } from './orders/create-order.route.js';
+import { registerDeleteOrderRoute } from './orders/delete-order.route.js';
+import { registerGetOrderRoute } from './orders/get-order.route.js';
+import { registerListOrdersRoute } from './orders/list-orders.route.js';
+import { registerUpdateOrderRoute } from './orders/update-order.route.js';
 
 // Rota para operacoes relacionadas a pedidos
 export const orderRoutes: FastifyPluginCallback = (app, _options, done) => {
   const orderService = new OrderService(app);
 
-  // Rota POST /order - Criar um novo pedido
-  app.post<{ Body: CreateOrderBody }>(
-    '/order',
-    {
-      schema: {
-        body: createOrderBodySchema,
-      },
-      attachValidation: true,
-    },
-    async (request, reply) => {
-      if (request.validationError) {
-        // Mapeia os erros de validação do Fastify para o formato esperado pelo InvalidRequestError
-        throw InvalidRequestError.fromFastifyValidation(
-          request.validationError.validation,
-        );
-      }
-
-      // Mapeia o body da request para o formato esperado pelo serviço de pedido
-      const orderInput = mapCreateOrderBodyToInput(request.body);
-      // Chama o serviço para criar o pedido
-      const createdOrder = await orderService.createOrder(orderInput);
-
-      return reply.status(201).send(createdOrder);
-    },
-  );
+  registerCreateOrderRoute(app, orderService);
+  registerListOrdersRoute(app, orderService);
+  registerGetOrderRoute(app, orderService);
+  registerUpdateOrderRoute(app, orderService);
+  registerDeleteOrderRoute(app, orderService);
 
   done();
 };
