@@ -12,7 +12,7 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 - TypeScript
 - Fastify
 - PostgreSQL
-- Docker / Docker Compose
+- Docker / Docker Compose (opcional)
 - Swagger (OpenAPI) com `@fastify/swagger` e `@fastify/swagger-ui`
 - ESLint + Prettier + Husky
 
@@ -27,6 +27,8 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 ├── docker-compose.yml
 ├── docs/
 │   └── fastify-order-manager.postman_collection.json
+├── scripts/
+│   └── db-migrate.js
 ├── src/
 │   ├── app.ts
 │   ├── server.ts
@@ -71,8 +73,9 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 ## Pré-requisitos
 
 - Node.js 20+
-- Docker e Docker Compose
 - Yarn ou npm
+- PostgreSQL acessível (local, cloud ou Docker)
+- Docker e Docker Compose (opcional)
 
 ## Como rodar localmente
 
@@ -94,13 +97,21 @@ Credenciais padrão de autenticação (configuráveis via `.env`):
 - `JWT_PASSWORD=admin123`
 - `JWT_SECRET=change-me-in-production`
 
-3. Subir o PostgreSQL:
+3. Subir o PostgreSQL (opcional via Docker):
 
 ```bash
 yarn db:up
 ```
 
-4. Rodar a aplicação em modo desenvolvimento:
+4. Aplicar schema no banco:
+
+```bash
+yarn db:migrate
+```
+
+> Se você subiu o PostgreSQL com `yarn db:up` e é o primeiro boot com volume vazio, o Docker já aplica `database/init/001_create_tables.sql` automaticamente. Nesse caso, o `db:migrate` é opcional.
+
+5. Rodar a aplicação em modo desenvolvimento:
 
 ```bash
 yarn dev
@@ -108,7 +119,7 @@ yarn dev
 
 A API sobe por padrão em `http://localhost:3000`.
 
-## Docker (banco de dados)
+## Docker (opcional para banco)
 
 Neste projeto, o Docker é usado para subir apenas o PostgreSQL via `docker-compose.yml`.
 
@@ -118,12 +129,18 @@ docker compose logs -f postgres
 docker compose down
 ```
 
+Observação importante:
+
+- O script em `database/init` roda apenas no primeiro boot do container com volume novo (`postgres_data` vazio).
+- Se o volume já existir, o init não roda novamente; para mudanças de schema use `yarn db:migrate` (ou recrie o volume).
+
 ## Comandos úteis
 
 ```bash
 yarn dev          # desenvolvimento (watch)
 yarn build        # build TypeScript -> dist
 yarn start        # executa versão compilada
+yarn db:migrate   # aplica schema SQL no banco configurado
 yarn db:up        # sobe postgres via docker-compose.yml
 yarn db:down      # derruba containers do docker compose
 yarn db:logs      # logs do postgres
@@ -224,6 +241,16 @@ Response:
   ]
 }
 ```
+
+## Banco de dados
+
+O schema da aplicação é aplicado manualmente via CLI:
+
+- `yarn db:migrate`
+
+Arquivo SQL usado pelo comando:
+
+- `database/init/001_create_tables.sql`
 
 ### Erro de exceção (404 - pedido não encontrado)
 
