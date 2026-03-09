@@ -1,6 +1,5 @@
 // Estrutura crua da tabela orders no banco
 export interface OrderRow {
-  id: number;
   order_id: string;
   value: string;
   creation_date: Date;
@@ -8,7 +7,6 @@ export interface OrderRow {
 
 // Estrutura crua da tabela items no banco
 export interface ItemRow {
-  id: number;
   order_id: string;
   product_id: number;
   quantity: number;
@@ -17,7 +15,6 @@ export interface ItemRow {
 
 // Modelo de item usado pela aplicacao
 export interface Item {
-  id: number;
   orderId: string;
   productId: number;
   quantity: number;
@@ -26,7 +23,6 @@ export interface Item {
 
 // Modelo de pedido usado pela aplicacao
 export interface Order {
-  id: number;
   orderId: string;
   value: number;
   creationDate: Date;

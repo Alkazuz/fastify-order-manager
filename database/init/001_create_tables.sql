@@ -1,6 +1,5 @@
 -- Tabela principal de pedidos
 CREATE TABLE IF NOT EXISTS "Order" (
-    id BIGSERIAL PRIMARY KEY,
     "orderId" VARCHAR(64) NOT NULL UNIQUE,
     "value" NUMERIC(12, 2) NOT NULL CHECK ("value" >= 0),
     "creationDate" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -8,7 +7,6 @@ CREATE TABLE IF NOT EXISTS "Order" (
 
 -- Tabela de itens vinculados a um pedido
 CREATE TABLE IF NOT EXISTS "Items" (
-    id BIGSERIAL PRIMARY KEY,
     "orderId" VARCHAR(64) NOT NULL,
     "productId" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL CHECK ("quantity" > 0),

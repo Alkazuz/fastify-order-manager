@@ -3,7 +3,6 @@ import type { Item, ItemRow, Order, OrderRow } from './order.model.js';
 // Converter uma linha da tabela items para o modelo da aplicacao
 export function toItemModel(row: ItemRow): Item {
   return {
-    id: row.id,
     orderId: row.order_id,
     productId: Number(row.product_id),
     quantity: row.quantity,
@@ -14,7 +13,6 @@ export function toItemModel(row: ItemRow): Item {
 // Converter uma linha da tabela orders para o modelo da aplicacao
 export function toOrderModel(row: OrderRow, items: Item[]): Order {
   return {
-    id: row.id,
     orderId: row.order_id,
     value: Number(row.value),
     creationDate: row.creation_date,

@@ -31,7 +31,6 @@ export class OrderRepository {
     const result = await this.app.pg.query<OrderRow>(
       `
       SELECT
-        id,
         "orderId" AS order_id,
         "value" AS value,
         "creationDate" AS creation_date
@@ -50,7 +49,6 @@ export class OrderRepository {
     const result = await this.app.pg.query<ItemRow>(
       `
       SELECT
-        id,
         "orderId" AS order_id,
         "productId" AS product_id,
         "quantity" AS quantity,
@@ -76,7 +74,6 @@ export class OrderRepository {
     const result = await this.app.pg.query<ItemRow>(
       `
       SELECT
-        id,
         "orderId" AS order_id,
         "productId" AS product_id,
         "quantity" AS quantity,
@@ -97,7 +94,6 @@ export class OrderRepository {
     const result = await this.app.pg.query<OrderRow>(
       `
       SELECT
-        id,
         "orderId" AS order_id,
         "value" AS value,
         "creationDate" AS creation_date
@@ -119,7 +115,6 @@ export class OrderRepository {
           INSERT INTO "Order" ("orderId", "value", "creationDate")
           VALUES ($1, $2, $3)
           RETURNING
-            id,
             "orderId" AS order_id,
             "value" AS value,
             "creationDate" AS creation_date
@@ -140,7 +135,6 @@ export class OrderRepository {
             INSERT INTO "Items" ("orderId", "productId", "quantity", "price")
             VALUES ($1, $2, $3, $4)
             RETURNING
-              id,
               "orderId" AS order_id,
               "productId" AS product_id,
               "quantity" AS quantity,
@@ -179,7 +173,6 @@ export class OrderRepository {
         SET "value" = $2, "creationDate" = $3
         WHERE "orderId" = $1
         RETURNING
-          id,
           "orderId" AS order_id,
           "value" AS value,
           "creationDate" AS creation_date
@@ -208,7 +201,6 @@ export class OrderRepository {
           INSERT INTO "Items" ("orderId", "productId", "quantity", "price")
           VALUES ($1, $2, $3, $4)
           RETURNING
-            id,
             "orderId" AS order_id,
             "productId" AS product_id,
             "quantity" AS quantity,
