@@ -17,6 +17,7 @@ export function registerDeleteOrderRoute(
       schema: {
         tags: ['Orders'],
         summary: 'Delete order by identifier',
+        security: [{ bearerAuth: [] }],
         params: orderParamsSchema,
       },
       attachValidation: true,

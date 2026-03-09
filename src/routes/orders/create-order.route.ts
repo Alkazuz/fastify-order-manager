@@ -18,6 +18,7 @@ export function registerCreateOrderRoute(
       schema: {
         tags: ['Orders'],
         summary: 'Create a new order',
+        security: [{ bearerAuth: [] }],
         body: createOrderBodySchema,
       },
       attachValidation: true,

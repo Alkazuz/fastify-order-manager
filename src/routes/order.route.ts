@@ -11,6 +11,11 @@ import { registerUpdateOrderRoute } from './orders/update-order.route.js';
 export const orderRoutes: FastifyPluginCallback = (app, _options, done) => {
   const orderService = new OrderService(app);
 
+  // Todas as rotas de pedido exigem token JWT valido
+  app.addHook('preHandler', async (request, reply) =>
+    app.authenticate(request, reply),
+  );
+
   registerCreateOrderRoute(app, orderService);
   registerListOrdersRoute(app, orderService);
   registerGetOrderRoute(app, orderService);

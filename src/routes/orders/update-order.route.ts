@@ -22,6 +22,7 @@ export function registerUpdateOrderRoute(
       schema: {
         tags: ['Orders'],
         summary: 'Update an existing order',
+        security: [{ bearerAuth: [] }],
         params: orderParamsSchema,
         body: updateOrderBodySchema,
       },

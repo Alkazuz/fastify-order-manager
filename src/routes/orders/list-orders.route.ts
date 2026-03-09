@@ -12,6 +12,7 @@ export function registerListOrdersRoute(
       schema: {
         tags: ['Orders'],
         summary: 'List all orders',
+        security: [{ bearerAuth: [] }],
       },
     },
     async (_request, reply) => {

@@ -17,6 +17,7 @@ export function registerGetOrderRoute(
       schema: {
         tags: ['Orders'],
         summary: 'Get order by identifier',
+        security: [{ bearerAuth: [] }],
         params: orderParamsSchema,
       },
       attachValidation: true,
