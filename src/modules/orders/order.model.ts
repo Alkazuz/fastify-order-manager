@@ -45,3 +45,9 @@ export interface CreateOrderInput {
   creationDate: Date;
   items: CreateOrderItemInput[];
 }
+
+export interface UpdateOrderInput {
+  value: number;
+  creationDate: Date;
+  items: CreateOrderItemInput[];
+}

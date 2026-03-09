@@ -1,6 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { CreateOrderInput, ItemRow, OrderRow } from './order.model.js';
+import type {
+  CreateOrderInput,
+  ItemRow,
+  OrderRow,
+  UpdateOrderInput,
+} from './order.model.js';
 
 // Repositorio responsavel por acessar os dados de pedidos no banco
 export class OrderRepository {
@@ -112,5 +117,69 @@ export class OrderRepository {
 
       return { order: createdOrder, items: createdItems };
     });
+  }
+
+  async updateOrder(
+    orderId: string,
+    orderInput: UpdateOrderInput,
+  ): Promise<{ order: OrderRow; items: ItemRow[] } | null> {
+    return this.app.pg.transact(async (client) => {
+      const orderUpdateResult = await client.query<OrderRow>(
+        `
+        UPDATE orders
+        SET value = $2, creation_date = $3
+        WHERE order_id = $1
+        RETURNING *
+      `,
+        [orderId, orderInput.value, orderInput.creationDate],
+      );
+
+      const updatedOrder = orderUpdateResult.rows[0];
+      if (!updatedOrder) {
+        return null;
+      }
+
+      await client.query(
+        `
+        DELETE FROM items
+        WHERE order_id = $1
+      `,
+        [orderId],
+      );
+
+      const updatedItems: ItemRow[] = [];
+
+      for (const item of orderInput.items) {
+        const itemInsertResult = await client.query<ItemRow>(
+          `
+          INSERT INTO items (order_id, product_id, quantity, price)
+          VALUES ($1, $2, $3, $4)
+          RETURNING *
+        `,
+          [orderId, item.productId, item.quantity, item.price],
+        );
+
+        const updatedItem = itemInsertResult.rows[0];
+        if (!updatedItem) {
+          throw new Error('Failed to update order item.');
+        }
+
+        updatedItems.push(updatedItem);
+      }
+
+      return { order: updatedOrder, items: updatedItems };
+    });
+  }
+
+  async deleteOrder(orderId: string): Promise<boolean> {
+    const result = await this.app.pg.query(
+      `
+      DELETE FROM orders
+      WHERE order_id = $1
+    `,
+      [orderId],
+    );
+
+    return (result.rowCount ?? 0) > 0;
   }
 }
