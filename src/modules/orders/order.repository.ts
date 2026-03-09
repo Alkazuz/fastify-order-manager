@@ -6,6 +6,20 @@ import type {
   OrderRow,
   UpdateOrderInput,
 } from './order.model.js';
+import { ModelAlreadyExistsError } from '../../errors/models/model-already-exists.js';
+
+interface PostgresErrorLike {
+  code?: string;
+}
+
+function isOrderIdUniqueViolation(error: unknown): error is PostgresErrorLike {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const { code } = error as PostgresErrorLike;
+  return code === '23505';
+}
 
 // Repositorio responsavel por acessar os dados de pedidos no banco
 export class OrderRepository {
@@ -16,9 +30,13 @@ export class OrderRepository {
     // Executa a consulta SQL para buscar o pedido pelo ID, utilizando o cliente PostgreSQL do Fastify
     const result = await this.app.pg.query<OrderRow>(
       `
-      SELECT *
-      FROM orders
-      WHERE order_id = $1
+      SELECT
+        id,
+        "orderId" AS order_id,
+        "value" AS value,
+        "creationDate" AS creation_date
+      FROM "Order"
+      WHERE "orderId" = $1
     `,
       [orderId],
     );
@@ -31,9 +49,14 @@ export class OrderRepository {
     // Executa a consulta SQL para buscar os itens relacionados a um pedido específico, utilizando o cliente PostgreSQL do Fastify
     const result = await this.app.pg.query<ItemRow>(
       `
-      SELECT *
-      FROM items
-      WHERE order_id = $1
+      SELECT
+        id,
+        "orderId" AS order_id,
+        "productId" AS product_id,
+        "quantity" AS quantity,
+        "price" AS price
+      FROM "Items"
+      WHERE "orderId" = $1
     `,
       [orderId],
     );
@@ -52,9 +75,14 @@ export class OrderRepository {
     // Executa a consulta SQL para buscar os itens relacionados a vários pedidos, utilizando o operador ANY para filtrar por uma lista de IDs de pedidos, e utilizando o cliente PostgreSQL do Fastify
     const result = await this.app.pg.query<ItemRow>(
       `
-      SELECT *
-      FROM items
-      WHERE order_id = ANY($1)
+      SELECT
+        id,
+        "orderId" AS order_id,
+        "productId" AS product_id,
+        "quantity" AS quantity,
+        "price" AS price
+      FROM "Items"
+      WHERE "orderId" = ANY($1)
     `,
       [orderIds],
     );
@@ -68,8 +96,12 @@ export class OrderRepository {
     // Executa a consulta SQL para buscar todos os pedidos, utilizando o cliente PostgreSQL do Fastify
     const result = await this.app.pg.query<OrderRow>(
       `
-      SELECT *
-      FROM orders
+      SELECT
+        id,
+        "orderId" AS order_id,
+        "value" AS value,
+        "creationDate" AS creation_date
+      FROM "Order"
     `,
     );
 
@@ -80,43 +112,60 @@ export class OrderRepository {
   async createOrder(
     orderInput: CreateOrderInput,
   ): Promise<{ order: OrderRow; items: ItemRow[] }> {
-    return this.app.pg.transact(async (client) => {
-      const orderInsertResult = await client.query<OrderRow>(
-        `
-        INSERT INTO orders (order_id, value, creation_date)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `,
-        [orderInput.orderId, orderInput.value, orderInput.creationDate],
-      );
-
-      const createdOrder = orderInsertResult.rows[0];
-      if (!createdOrder) {
-        throw new Error('Failed to create order.');
-      }
-
-      const createdItems: ItemRow[] = [];
-
-      for (const item of orderInput.items) {
-        const itemInsertResult = await client.query<ItemRow>(
+    try {
+      return await this.app.pg.transact(async (client) => {
+        const orderInsertResult = await client.query<OrderRow>(
           `
-          INSERT INTO items (order_id, product_id, quantity, price)
-          VALUES ($1, $2, $3, $4)
-          RETURNING *
+          INSERT INTO "Order" ("orderId", "value", "creationDate")
+          VALUES ($1, $2, $3)
+          RETURNING
+            id,
+            "orderId" AS order_id,
+            "value" AS value,
+            "creationDate" AS creation_date
         `,
-          [orderInput.orderId, item.productId, item.quantity, item.price],
+          [orderInput.orderId, orderInput.value, orderInput.creationDate],
         );
 
-        const createdItem = itemInsertResult.rows[0];
-        if (!createdItem) {
-          throw new Error('Failed to create order item.');
+        const createdOrder = orderInsertResult.rows[0];
+        if (!createdOrder) {
+          throw new Error('Failed to create order.');
         }
 
-        createdItems.push(createdItem);
+        const createdItems: ItemRow[] = [];
+
+        for (const item of orderInput.items) {
+          const itemInsertResult = await client.query<ItemRow>(
+            `
+            INSERT INTO "Items" ("orderId", "productId", "quantity", "price")
+            VALUES ($1, $2, $3, $4)
+            RETURNING
+              id,
+              "orderId" AS order_id,
+              "productId" AS product_id,
+              "quantity" AS quantity,
+              "price" AS price
+          `,
+            [orderInput.orderId, item.productId, item.quantity, item.price],
+          );
+
+          const createdItem = itemInsertResult.rows[0];
+          if (!createdItem) {
+            throw new Error('Failed to create order item.');
+          }
+
+          createdItems.push(createdItem);
+        }
+
+        return { order: createdOrder, items: createdItems };
+      });
+    } catch (error) {
+      if (isOrderIdUniqueViolation(error)) {
+        throw new ModelAlreadyExistsError('Order', orderInput.orderId);
       }
 
-      return { order: createdOrder, items: createdItems };
-    });
+      throw error;
+    }
   }
 
   async updateOrder(
@@ -126,10 +175,14 @@ export class OrderRepository {
     return this.app.pg.transact(async (client) => {
       const orderUpdateResult = await client.query<OrderRow>(
         `
-        UPDATE orders
-        SET value = $2, creation_date = $3
-        WHERE order_id = $1
-        RETURNING *
+        UPDATE "Order"
+        SET "value" = $2, "creationDate" = $3
+        WHERE "orderId" = $1
+        RETURNING
+          id,
+          "orderId" AS order_id,
+          "value" AS value,
+          "creationDate" AS creation_date
       `,
         [orderId, orderInput.value, orderInput.creationDate],
       );
@@ -141,8 +194,8 @@ export class OrderRepository {
 
       await client.query(
         `
-        DELETE FROM items
-        WHERE order_id = $1
+        DELETE FROM "Items"
+        WHERE "orderId" = $1
       `,
         [orderId],
       );
@@ -152,9 +205,14 @@ export class OrderRepository {
       for (const item of orderInput.items) {
         const itemInsertResult = await client.query<ItemRow>(
           `
-          INSERT INTO items (order_id, product_id, quantity, price)
+          INSERT INTO "Items" ("orderId", "productId", "quantity", "price")
           VALUES ($1, $2, $3, $4)
-          RETURNING *
+          RETURNING
+            id,
+            "orderId" AS order_id,
+            "productId" AS product_id,
+            "quantity" AS quantity,
+            "price" AS price
         `,
           [orderId, item.productId, item.quantity, item.price],
         );
@@ -174,8 +232,8 @@ export class OrderRepository {
   async deleteOrder(orderId: string): Promise<boolean> {
     const result = await this.app.pg.query(
       `
-      DELETE FROM orders
-      WHERE order_id = $1
+      DELETE FROM "Order"
+      WHERE "orderId" = $1
     `,
       [orderId],
     );
