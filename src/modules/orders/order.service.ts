@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
 import { toItemModel, toOrderModel } from './order.mapper.js';
-import type { Item, Order } from './order.model.js';
+import type { CreateOrderInput, Item, Order } from './order.model.js';
 import { OrderRepository } from './order.repository.js';
 import { ModelNotFoundError } from '../../errors/models/model-not-found.js';
 
@@ -43,7 +43,7 @@ export class OrderService {
   }
 
   // Buscar um pedido por ID, lançando um erro se não encontrado
-  async getOrderById(orderId: string): Promise<Order | null> {
+  async getOrderById(orderId: string): Promise<Order> {
     // Buscar o pedido no banco de dados
     const order = await this.repository.findOrderById(orderId);
 
@@ -55,5 +55,15 @@ export class OrderService {
 
     // Compor o modelo completo do pedido com seus itens e retornar
     return toOrderModel(order, items.map(toItemModel));
+  }
+
+  // Criar um novo pedido com seus itens
+  async createOrder(orderInput: CreateOrderInput): Promise<Order> {
+    const createdOrder = await this.repository.createOrder(orderInput);
+
+    return toOrderModel(
+      createdOrder.order,
+      createdOrder.items.map((item) => toItemModel(item)),
+    );
   }
 }

@@ -32,3 +32,16 @@ export interface Order {
   creationDate: Date;
   items: Item[];
 }
+
+export interface CreateOrderItemInput {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
+export interface CreateOrderInput {
+  orderId: string;
+  value: number;
+  creationDate: Date;
+  items: CreateOrderItemInput[];
+}

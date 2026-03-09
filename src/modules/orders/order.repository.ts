@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { ItemRow, OrderRow } from './order.model.js';
+import type { CreateOrderInput, ItemRow, OrderRow } from './order.model.js';
 
 // Repositorio responsavel por acessar os dados de pedidos no banco
 export class OrderRepository {
@@ -70,5 +70,47 @@ export class OrderRepository {
 
     // Retorna todos os resultados encontrados
     return result.rows;
+  }
+
+  async createOrder(
+    orderInput: CreateOrderInput,
+  ): Promise<{ order: OrderRow; items: ItemRow[] }> {
+    return this.app.pg.transact(async (client) => {
+      const orderInsertResult = await client.query<OrderRow>(
+        `
+        INSERT INTO orders (order_id, value, creation_date)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `,
+        [orderInput.orderId, orderInput.value, orderInput.creationDate],
+      );
+
+      const createdOrder = orderInsertResult.rows[0];
+      if (!createdOrder) {
+        throw new Error('Failed to create order.');
+      }
+
+      const createdItems: ItemRow[] = [];
+
+      for (const item of orderInput.items) {
+        const itemInsertResult = await client.query<ItemRow>(
+          `
+          INSERT INTO items (order_id, product_id, quantity, price)
+          VALUES ($1, $2, $3, $4)
+          RETURNING *
+        `,
+          [orderInput.orderId, item.productId, item.quantity, item.price],
+        );
+
+        const createdItem = itemInsertResult.rows[0];
+        if (!createdItem) {
+          throw new Error('Failed to create order item.');
+        }
+
+        createdItems.push(createdItem);
+      }
+
+      return { order: createdOrder, items: createdItems };
+    });
   }
 }
