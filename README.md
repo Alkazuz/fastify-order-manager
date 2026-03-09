@@ -155,6 +155,61 @@ Importe no Postman e ajuste a variável `baseUrl` se necessário.
 }
 ```
 
+## Exemplos de respostas
+
+### Sucesso (201 - POST /order)
+
+```json
+{
+  "id": 1,
+  "orderId": "v10089015vdb-01",
+  "value": 10000,
+  "creationDate": "2023-07-19T12:24:11.529Z",
+  "items": [
+    {
+      "id": 1,
+      "orderId": "v10089015vdb-01",
+      "productId": "2434",
+      "quantity": 1,
+      "price": 1000
+    }
+  ]
+}
+```
+
+### Erro de exceção (404 - pedido não encontrado)
+
+Exemplo para `GET /order/nao-existe`:
+
+```json
+{
+  "error": "MODEL_NOT_FOUND",
+  "message": "Order with identifier nao-existe not found.",
+  "details": null
+}
+```
+
+### Erro de validação de body (400)
+
+Exemplo para `POST /order` com campos inválidos:
+
+```json
+{
+  "error": "INVALID_REQUEST",
+  "message": "Invalid request body.",
+  "details": [
+    {
+      "field": "valorTotal",
+      "description": "must be number"
+    },
+    {
+      "field": "items[0].quantidadeItem",
+      "description": "must be >= 1"
+    }
+  ]
+}
+```
+
 ## Banco de dados
 
 As tabelas são criadas automaticamente ao iniciar o container via script:
