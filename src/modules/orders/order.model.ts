@@ -10,7 +10,7 @@ export interface OrderRow {
 export interface ItemRow {
   id: number;
   order_id: string;
-  product_id: string;
+  product_id: number;
   quantity: number;
   price: string;
 }
@@ -19,7 +19,7 @@ export interface ItemRow {
 export interface Item {
   id: number;
   orderId: string;
-  productId: string;
+  productId: number;
   quantity: number;
   price: number;
 }
@@ -34,7 +34,7 @@ export interface Order {
 }
 
 export interface CreateOrderItemInput {
-  productId: string;
+  productId: number;
   quantity: number;
   price: number;
 }

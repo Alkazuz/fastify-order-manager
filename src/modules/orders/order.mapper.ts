@@ -5,7 +5,7 @@ export function toItemModel(row: ItemRow): Item {
   return {
     id: row.id,
     orderId: row.order_id,
-    productId: row.product_id,
+    productId: Number(row.product_id),
     quantity: row.quantity,
     price: Number(row.price),
   };
