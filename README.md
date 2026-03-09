@@ -20,6 +20,7 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 
 ```text
 .
+├── .env.example
 ├── database/
 │   └── init/
 │       └── 001_create_tables.sql
@@ -39,6 +40,9 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 │   │   ├── app-error.ts
 │   │   ├── error-handler.ts
 │   │   └── models/
+│   │       ├── invalid-request.ts
+│   │       ├── model-not-found.ts
+│   │       └── unauthorized.ts
 │   ├── modules/
 │   │   └── orders/
 │   │       ├── order.model.ts
@@ -46,11 +50,21 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 │   │       ├── order.repository.ts
 │   │       ├── order.service.ts
 │   │       └── validators/
+│   │           ├── create-order.body.validator.ts
+│   │           ├── order-params.validator.ts
+│   │           └── update-order.body.validator.ts
 │   └── routes/
+│       ├── auth.route.ts
 │       ├── health.route.ts
 │       ├── index.ts
 │       ├── order.route.ts
 │       └── orders/
+│           ├── create-order.route.ts
+│           ├── delete-order.route.ts
+│           ├── get-order.route.ts
+│           ├── list-orders.route.ts
+│           ├── update-order.route.ts
+│           └── validation.ts
 └── README.md
 ```
 
