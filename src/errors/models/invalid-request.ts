@@ -44,7 +44,6 @@ function getPropertyName(error: FastifySchemaValidationError): string | null {
 function isFastifySchemaValidationError(
   value: unknown,
 ): value is FastifySchemaValidationError {
-  console.log('Validating error:', value);
   return (
     typeof value === 'object' &&
     value !== null &&
