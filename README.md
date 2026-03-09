@@ -29,6 +29,8 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 ├── src/
 │   ├── app.ts
 │   ├── server.ts
+│   ├── auth/
+│   │   └── index.ts
 │   ├── database/
 │   │   └── index.ts
 │   ├── docs/
