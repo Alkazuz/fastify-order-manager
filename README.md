@@ -20,13 +20,9 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 
 ```text
 .
-├── .dockerignore
-├── Dockerfile
 ├── database/
 │   └── init/
 │       └── 001_create_tables.sql
-├── docker-compose.dev.yml
-├── docker-compose.prod.yml
 ├── docker-compose.yml
 ├── docs/
 │   └── fastify-order-manager.postman_collection.json
@@ -90,41 +86,15 @@ yarn dev
 
 A API sobe por padrão em `http://localhost:3000`.
 
-## Execução com Docker
+## Docker (banco de dados)
 
-O projeto possui duas composições separadas:
-
-- `docker-compose.dev.yml`: desenvolvimento (API com hot reload + PostgreSQL)
-- `docker-compose.prod.yml`: execução de produção (API compilada + PostgreSQL)
-
-### Desenvolvimento com Docker
+Neste projeto, o Docker é usado para subir apenas o PostgreSQL via `docker-compose.yml`.
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose up -d postgres
+docker compose logs -f postgres
+docker compose down
 ```
-
-### Produção com Docker
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-### Parar ambientes Docker
-
-```bash
-docker compose -f docker-compose.dev.yml down
-docker compose -f docker-compose.prod.yml down
-```
-
-## Dockerfile
-
-O `Dockerfile` foi organizado em múltiplos estágios:
-
-- `dev`: usa `yarn dev`
-- `build`: compila TypeScript para `dist/`
-- `production`: instala apenas dependências de runtime e executa `yarn start`
-
-Isso permite aproveitar o mesmo arquivo para desenvolvimento e produção, com imagens menores no ambiente final.
 
 ## Comandos úteis
 
@@ -132,9 +102,9 @@ Isso permite aproveitar o mesmo arquivo para desenvolvimento e produção, com i
 yarn dev          # desenvolvimento (watch)
 yarn build        # build TypeScript -> dist
 yarn start        # executa versão compilada
-yarn db:up        # sobe apenas postgres (docker-compose.yml legado)
-yarn db:down      # derruba containers do compose legado
-yarn db:logs      # logs do postgres do compose legado
+yarn db:up        # sobe postgres via docker-compose.yml
+yarn db:down      # derruba containers do docker compose
+yarn db:logs      # logs do postgres
 yarn lint         # lint
 yarn lint:fix     # lint com correções
 yarn typecheck    # validação de tipos
