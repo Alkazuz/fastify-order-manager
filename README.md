@@ -2,19 +2,15 @@
 
 API de gerenciamento de pedidos desenvolvida como **desafio técnico para a vaga de Desenvolvedor Fullstack na Jitterbit**.
 
-## Contexto
-
-O objetivo do desafio é expor uma API para operações de pedido com persistência em banco de dados, incluindo criação, consulta, listagem, atualização e exclusão.
-
 ## Tecnologias utilizadas
 
 - Node.js
 - TypeScript
 - Fastify
-- JWT com `@fastify/jwt`
 - PostgreSQL
+- JWT com `@fastify/jwt`
+- Swagger/OpenAPI com `@fastify/swagger` e `@fastify/swagger-ui`
 - Docker / Docker Compose (opcional)
-- Swagger (OpenAPI) com `@fastify/swagger` e `@fastify/swagger-ui`
 - ESLint + Prettier + Husky
 
 ## Estrutura do projeto
@@ -44,6 +40,7 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 │   │   ├── error-handler.ts
 │   │   └── models/
 │   │       ├── invalid-request.ts
+│   │       ├── model-already-exists.ts
 │   │       ├── model-not-found.ts
 │   │       └── unauthorized.ts
 │   ├── modules/
@@ -92,13 +89,7 @@ yarn install
 cp .env.example .env
 ```
 
-Credenciais padrão de autenticação (configuráveis via `.env`):
-
-- `JWT_USER=admin`
-- `JWT_PASSWORD=admin123`
-- `JWT_SECRET=change-me-in-production`
-
-3. Subir o PostgreSQL (opcional via Docker):
+3. Subir PostgreSQL (opcional via Docker):
 
 ```bash
 yarn db:up
@@ -110,30 +101,19 @@ yarn db:up
 yarn db:migrate
 ```
 
-> Se você subiu o PostgreSQL com `yarn db:up` e é o primeiro boot com volume vazio, o Docker já aplica `database/init/001_create_tables.sql` automaticamente. Nesse caso, o `db:migrate` é opcional.
-
-5. Rodar a aplicação em modo desenvolvimento:
+5. Subir a API:
 
 ```bash
 yarn dev
 ```
 
-A API sobe por padrão em `http://localhost:3000`.
+API disponível em `http://localhost:3000`.
 
-## Docker (opcional para banco)
+### Observação sobre Docker
 
-Neste projeto, o Docker é usado para subir apenas o PostgreSQL via `docker-compose.yml`.
-
-```bash
-docker compose up -d postgres
-docker compose logs -f postgres
-docker compose down
-```
-
-Observação importante:
-
-- O script em `database/init` roda apenas no primeiro boot do container com volume novo (`postgres_data` vazio).
-- Se o volume já existir, o init não roda novamente; para mudanças de schema use `yarn db:migrate` (ou recrie o volume).
+- O script SQL em `database/init` é executado automaticamente no **primeiro boot** de um volume novo (`postgres_data` vazio).
+- Se o volume já existir, para reaplicar schema você pode rodar `yarn db:migrate`.
+- Se você vai reconstruir tudo do zero, pode remover o volume e subir novamente.
 
 ## Comandos úteis
 
@@ -151,26 +131,17 @@ yarn typecheck    # validação de tipos
 yarn check        # lint + typecheck
 ```
 
-## Documentação de API
-
-- Swagger UI: `http://localhost:3000/docs`
-- OpenAPI JSON: `http://localhost:3000/docs/json`
-
-## Collection do Postman
-
-A collection está em:
-
-- `docs/fastify-order-manager.postman_collection.json`
-
-Importe no Postman e ajuste a variável `baseUrl` se necessário.
-
 ## Endpoints
 
 ### Health
 
 - `GET /health`
 
-### Orders
+### Auth
+
+- `POST /auth/login` - gera token JWT
+
+### Orders (protegidas por JWT)
 
 - `POST /order` - cria pedido
 - `GET /order/:orderId` - busca pedido por identificador
@@ -178,13 +149,7 @@ Importe no Postman e ajuste a variável `baseUrl` se necessário.
 - `PUT /order/:orderId` - atualiza pedido
 - `DELETE /order/:orderId` - remove pedido
 
-> As rotas de `Orders` exigem autenticação JWT via header `Authorization: Bearer <token>`.
-
-### Auth
-
-- `POST /auth/login` - gera token JWT
-
-## Exemplo de payload (POST /order)
+## Payload esperado para criação
 
 ```json
 {
@@ -201,27 +166,24 @@ Importe no Postman e ajuste a variável `baseUrl` se necessário.
 }
 ```
 
-## Exemplo de login (JWT)
-
-Request:
+### Transformação aplicada internamente
 
 ```json
 {
-  "username": "admin",
-  "password": "admin123"
+  "orderId": "v10089015vdb-01",
+  "value": 10000,
+  "creationDate": "2023-07-19T12:24:11.529Z",
+  "items": [
+    {
+      "productId": 2434,
+      "quantity": 1,
+      "price": 1000
+    }
+  ]
 }
 ```
 
-Response:
-
-```json
-{
-  "accessToken": "<jwt>",
-  "tokenType": "Bearer"
-}
-```
-
-## Exemplos de respostas
+## Exemplos de resposta
 
 ### Sucesso (201 - POST /order)
 
@@ -235,7 +197,7 @@ Response:
     {
       "id": 1,
       "orderId": "v10089015vdb-01",
-      "productId": "2434",
+      "productId": 2434,
       "quantity": 1,
       "price": 1000
     }
@@ -243,19 +205,32 @@ Response:
 }
 ```
 
-## Banco de dados
+### Erro de validação (400)
 
-O schema da aplicação é aplicado manualmente via CLI:
+```json
+{
+  "error": "INVALID_REQUEST",
+  "message": "Invalid request body.",
+  "details": [
+    {
+      "field": "items[0].idItem",
+      "description": "must match pattern \"^[0-9]+$\""
+    }
+  ]
+}
+```
 
-- `yarn db:migrate`
+### Erro de negócio (409 - duplicidade)
 
-Arquivo SQL usado pelo comando:
+```json
+{
+  "error": "MODEL_ALREADY_EXISTS",
+  "message": "Order with identifier v10089015vdb-01 already exists.",
+  "details": null
+}
+```
 
-- `database/init/001_create_tables.sql`
-
-### Erro de exceção (404 - pedido não encontrado)
-
-Exemplo para `GET /order/nao-existe`:
+### Erro de recurso não encontrado (404)
 
 ```json
 {
@@ -265,40 +240,31 @@ Exemplo para `GET /order/nao-existe`:
 }
 ```
 
-### Erro de validação de body (400)
+## Documentação
 
-Exemplo para `POST /order` com campos inválidos:
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/docs/json`
+- Postman collection: `docs/fastify-order-manager.postman_collection.json`
 
-```json
-{
-  "error": "INVALID_REQUEST",
-  "message": "Invalid request body.",
-  "details": [
-    {
-      "field": "valorTotal",
-      "description": "must be number"
-    },
-    {
-      "field": "items[0].quantidadeItem",
-      "description": "must be >= 1"
-    }
-  ]
-}
-```
+### Fluxo da collection no Postman
+
+1. Executar `Auth > Login` (salva `accessToken` automaticamente).
+2. Executar requests de `Orders` (todas usam `Bearer {{accessToken}}`).
 
 ## Banco de dados
 
-As tabelas são criadas automaticamente ao iniciar o container via script:
+Tabelas utilizadas:
 
-- `orders`
-- `items`
+- `Order`
+  - `orderId`
+  - `value`
+  - `creationDate`
+- `Items`
+  - `orderId`
+  - `productId` (inteiro)
+  - `quantity`
+  - `price`
 
-Script SQL:
+Script SQL fonte:
 
 - `database/init/001_create_tables.sql`
-
-## Observações
-
-- A API valida body e params com JSON Schema nativo do Fastify.
-- Erros de validação retornam payload padronizado com detalhes por campo.
-- Erros de negócio usam classes customizadas em `src/errors/models`.
