@@ -11,6 +11,7 @@ O objetivo do desafio é expor uma API para operações de pedido com persistên
 - Node.js
 - TypeScript
 - Fastify
+- JWT com `@fastify/jwt`
 - PostgreSQL
 - Docker / Docker Compose (opcional)
 - Swagger (OpenAPI) com `@fastify/swagger` e `@fastify/swagger-ui`
