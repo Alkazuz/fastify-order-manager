@@ -72,6 +72,12 @@ yarn install
 cp .env.example .env
 ```
 
+Credenciais padrão de autenticação (configuráveis via `.env`):
+
+- `JWT_USER=admin`
+- `JWT_PASSWORD=admin123`
+- `JWT_SECRET=change-me-in-production`
+
 3. Subir o PostgreSQL:
 
 ```bash
@@ -138,6 +144,12 @@ Importe no Postman e ajuste a variável `baseUrl` se necessário.
 - `PUT /order/:orderId` - atualiza pedido
 - `DELETE /order/:orderId` - remove pedido
 
+> As rotas de `Orders` exigem autenticação JWT via header `Authorization: Bearer <token>`.
+
+### Auth
+
+- `POST /auth/login` - gera token JWT
+
 ## Exemplo de payload (POST /order)
 
 ```json
@@ -152,6 +164,26 @@ Importe no Postman e ajuste a variável `baseUrl` se necessário.
       "valorItem": 1000
     }
   ]
+}
+```
+
+## Exemplo de login (JWT)
+
+Request:
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+Response:
+
+```json
+{
+  "accessToken": "<jwt>",
+  "tokenType": "Bearer"
 }
 ```
 
