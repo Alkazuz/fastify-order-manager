@@ -31,6 +31,9 @@ API de gerenciamento de pedidos desenvolvida como **desafio técnico para a vaga
 │   ├── server.ts
 │   ├── auth/
 │   │   └── index.ts
+│   ├── controllers/
+│   │   ├── base.controller.ts
+│   │   └── order.controller.ts
 │   ├── database/
 │   │   └── index.ts
 │   ├── docs/
