@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { OrderService } from '../../modules/orders/order.service.js';
+import type { OrderController } from '../../controllers/order.controller.js';
 import {
   orderParamsSchema,
   type OrderParams,
@@ -9,7 +9,7 @@ import { assertRequestIsValid } from './validation.js';
 
 export function registerDeleteOrderRoute(
   app: FastifyInstance,
-  orderService: OrderService,
+  orderController: OrderController,
 ): void {
   app.delete<{ Params: OrderParams }>(
     '/order/:orderId',
@@ -24,9 +24,7 @@ export function registerDeleteOrderRoute(
     },
     async (request, reply) => {
       assertRequestIsValid(request);
-
-      await orderService.deleteOrder(request.params.orderId);
-      return reply.status(204).send();
+      await orderController.delete(request, reply);
     },
   );
 }

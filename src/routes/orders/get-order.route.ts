@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { OrderService } from '../../modules/orders/order.service.js';
+import type { OrderController } from '../../controllers/order.controller.js';
 import {
   orderParamsSchema,
   type OrderParams,
@@ -9,7 +9,7 @@ import { assertRequestIsValid } from './validation.js';
 
 export function registerGetOrderRoute(
   app: FastifyInstance,
-  orderService: OrderService,
+  orderController: OrderController,
 ): void {
   app.get<{ Params: OrderParams }>(
     '/order/:orderId',
@@ -24,9 +24,7 @@ export function registerGetOrderRoute(
     },
     async (request, reply) => {
       assertRequestIsValid(request);
-
-      const order = await orderService.getOrderById(request.params.orderId);
-      return reply.status(200).send(order);
+      await orderController.getById(request, reply);
     },
   );
 }

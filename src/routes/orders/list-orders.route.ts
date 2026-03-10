@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { OrderService } from '../../modules/orders/order.service.js';
+import type { OrderController } from '../../controllers/order.controller.js';
 
 export function registerListOrdersRoute(
   app: FastifyInstance,
-  orderService: OrderService,
+  orderController: OrderController,
 ): void {
   app.get(
     '/order/list',
@@ -15,9 +15,8 @@ export function registerListOrdersRoute(
         security: [{ bearerAuth: [] }],
       },
     },
-    async (_request, reply) => {
-      const orders = await orderService.listOrders();
-      return reply.status(200).send(orders);
+    async (request, reply) => {
+      await orderController.list(request, reply);
     },
   );
 }

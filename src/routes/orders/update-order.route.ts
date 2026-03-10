@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { OrderService } from '../../modules/orders/order.service.js';
+import type { OrderController } from '../../controllers/order.controller.js';
 import {
   orderParamsSchema,
   type OrderParams,
 } from '../../modules/orders/validators/order-params.validator.js';
 import {
-  mapUpdateOrderBodyToInput,
   updateOrderBodySchema,
   type UpdateOrderBody,
 } from '../../modules/orders/validators/update-order.body.validator.js';
@@ -14,7 +13,7 @@ import { assertRequestIsValid } from './validation.js';
 
 export function registerUpdateOrderRoute(
   app: FastifyInstance,
-  orderService: OrderService,
+  orderController: OrderController,
 ): void {
   app.put<{ Params: OrderParams; Body: UpdateOrderBody }>(
     '/order/:orderId',
@@ -30,14 +29,7 @@ export function registerUpdateOrderRoute(
     },
     async (request, reply) => {
       assertRequestIsValid(request);
-
-      const orderInput = mapUpdateOrderBodyToInput(request.body);
-      const updatedOrder = await orderService.updateOrder(
-        request.params.orderId,
-        orderInput,
-      );
-
-      return reply.status(200).send(updatedOrder);
+      await orderController.update(request, reply);
     },
   );
 }
