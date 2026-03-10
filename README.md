@@ -1,271 +1,419 @@
 # Fastify Order Manager
 
-API de gerenciamento de pedidos desenvolvida como **desafio técnico para a vaga de Desenvolvedor Fullstack na Jitterbit**.
+> 🚀 Sistema de gerenciamento de pedidos com arquitetura em camadas, desenvolvido com Fastify e TypeScript.
 
-## Tecnologias utilizadas
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5.8-000000?logo=fastify&logoColor=white)](https://fastify.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE)
 
-- Node.js
-- TypeScript
-- Fastify
-- PostgreSQL
-- JWT com `@fastify/jwt`
-- Swagger/OpenAPI com `@fastify/swagger` e `@fastify/swagger-ui`
-- Docker / Docker Compose (opcional)
-- ESLint + Prettier + Husky
+Este projeto foi desenvolvido como parte do desafio técnico da **Jitterbit**, implementando uma API RESTful completa para gerenciamento de pedidos com autenticação JWT e documentação Swagger.
 
-## Estrutura do projeto
+---
 
-```text
-.
-├── .env.example
-├── database/
-│   └── init/
-│       └── 001_create_tables.sql
-├── docker-compose.yml
-├── docs/
-│   └── fastify-order-manager.postman_collection.json
-├── scripts/
-│   └── db-migrate.js
-├── src/
-│   ├── app.ts
-│   ├── server.ts
-│   ├── auth/
-│   │   └── index.ts
-│   ├── controllers/
-│   │   ├── base.controller.ts
-│   │   └── order.controller.ts
-│   ├── database/
-│   │   └── index.ts
-│   ├── docs/
-│   │   └── index.ts
-│   ├── errors/
-│   │   ├── app-error.ts
-│   │   ├── error-handler.ts
-│   │   └── models/
-│   │       ├── invalid-request.ts
-│   │       ├── model-already-exists.ts
-│   │       ├── model-not-found.ts
-│   │       └── unauthorized.ts
-│   ├── modules/
-│   │   └── orders/
-│   │       ├── order.model.ts
-│   │       ├── order.mapper.ts
-│   │       ├── order.repository.ts
-│   │       ├── order.service.ts
-│   │       └── validators/
-│   │           ├── create-order.body.validator.ts
-│   │           ├── order-params.validator.ts
-│   │           └── update-order.body.validator.ts
-│   └── routes/
-│       ├── auth.route.ts
-│       ├── health.route.ts
-│       ├── index.ts
-│       ├── order.route.ts
-│       └── orders/
-│           ├── create-order.route.ts
-│           ├── delete-order.route.ts
-│           ├── get-order.route.ts
-│           ├── list-orders.route.ts
-│           ├── update-order.route.ts
-│           └── validation.ts
-└── README.md
+## 📑 Índice
+
+- [Visão Geral](#-visão-geral)
+- [Stack](#-stack)
+- [Arquitetura](#-arquitetura)
+- [Instalação e Configuração](#-instalação-e-configuração)
+- [API](#-api)
+- [Modelo de Dados](#-modelo-de-dados)
+- [Qualidade](#-qualidade)
+- [Desenvolvimento](#-desenvolvimento)
+
+---
+
+## 🎯 Visão Geral
+
+API REST para gerenciar pedidos (criar, listar, buscar, atualizar e remover), com:
+
+- **Segurança**: autenticação com JWT nas rotas de pedido
+- **Documentação**: Swagger para visualizar e testar endpoints
+- **Organização**: separação por camadas (routes, controllers, services e repositories)
+- **Qualidade**: lint, formatação e verificação de tipos
+
+### ⚡ Decisões Técnicas
+
+**Por que TypeScript?**  
+Escolhi TypeScript para ter tipagem e reduzir erros comuns durante o desenvolvimento.
+
+**Por que Fastify?**  
+Escolhi Fastify por ser simples de configurar, rápido e ter boa integração com plugins.
+
+**Por que Arquitetura em Camadas?**  
+Usei essa separação para deixar o código mais organizado e facilitar manutenção.
+
+---
+
+## 🛠 Stack
+
+### Core
+
+| Tecnologia     | Versão | Propósito                                           |
+| -------------- | ------ | --------------------------------------------------- |
+| **Node.js**    | 20+    | Runtime JavaScript com suporte a ECMAScript modules |
+| **TypeScript** | 5.9    | Tipagem estática no desenvolvimento                 |
+| **Fastify**    | 5.8    | Framework web para construção da API                |
+| **PostgreSQL** | 16     | Banco de dados relacional                           |
+
+### Bibliotecas Principais
+
+- **@fastify/jwt** - Autenticação stateless com tokens JWT
+- **@fastify/postgres** - Cliente PostgreSQL otimizado para Fastify
+- **@fastify/swagger** + **@fastify/swagger-ui** - Documentação OpenAPI 3.0
+- **pg** - Driver PostgreSQL nativo
+
+### Ferramentas de Qualidade
+
+- **ESLint** + **typescript-eslint** - Linting com regras específicas para TS
+- **Prettier** - Formatação consistente de código
+- **Husky** + **lint-staged** - Git hooks para qualidade no commit
+- **tsx** - Execução TypeScript em desenvolvimento com watch mode
+
+### Infraestrutura
+
+- **Docker Compose** - Containerização do PostgreSQL
+- **dotenv** - Gerenciamento de variáveis de ambiente
+
+---
+
+## 🏗 Arquitetura
+
+A aplicação foi organizada em camadas:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  HTTP Request (JSON)                                          │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│  ROUTES LAYER                                                 │
+│  • Define endpoints e métodos HTTP                            │
+│  • Aplica validação de schema (JSON Schema)                   │
+│  • Gerencia middleware de autenticação                        │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│  CONTROLLERS LAYER                                            │
+│  • Recebe requisição validada                                 │
+│  • Delega lógica para Services                                │
+│  • Formata respostas HTTP (200, 201, 204, 4xx, 5xx)          │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│  SERVICES LAYER                                               │
+│  • Contém regras de negócio                                   │
+│  • Orquestra chamadas a Repositories                          │
+│  • Aplica mappers e validações                                │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│  REPOSITORIES LAYER                                           │
+│  • Abstrai acesso ao banco de dados                           │
+│  • Executa queries SQL via pg client                          │
+│  • Gerencia transações                                        │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│  PostgreSQL Database                                          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Pré-requisitos
+### Fluxo de Dados: Criação de Pedido
 
-- Node.js 20+
+```
+1. POST /order
+   Body: { numeroPedido, valorTotal, dataCriacao, items[] }
+          ↓
+2. Route valida schema JSON
+          ↓
+3. Controller chama OrderService.createOrder()
+          ↓
+4. Service aplica regras de negócio
+          ↓
+5. Repository executa INSERT em transação
+          ↓
+6. Service retorna Order com Items
+          ↓
+7. Controller responde 201 Created
+```
+
+### Estrutura de Diretórios
+
+```
+src/
+├── controllers/          # Manipuladores HTTP (BaseController, AuthController, OrderController)
+├── routes/               # Definição de endpoints e validações
+├── modules/
+│   ├── auth/            # Lógica de autenticação JWT
+│   └── orders/          # Domínio de pedidos
+│       ├── order.model.ts       # Tipos TypeScript
+│       ├── order.mapper.ts      # Conversão entre formatos internos
+│       ├── order.service.ts     # Regras de negócio
+│       ├── order.repository.ts  # Acesso ao banco
+│       └── validators/          # Schemas de validação
+├── errors/              # Error handlers customizados
+├── database/            # Configuração de conexão
+└── docs/                # Setup do Swagger
+```
+
+---
+
+## 📦 Instalação e Configuração
+
+### Pré-requisitos
+
+- Node.js 20 ou superior
+- PostgreSQL 14+ (ou Docker)
 - Yarn ou npm
-- PostgreSQL acessível (local, cloud ou Docker)
-- Docker e Docker Compose (opcional)
 
-## Como rodar localmente
-
-1. Instalar dependências:
+### Passo 1: Clonar e Instalar
 
 ```bash
+git clone https://github.com/Alkazuz/fastify-order-manager.git
+cd fastify-order-manager
 yarn install
 ```
 
-2. Criar arquivo de ambiente:
+### Passo 2: Configurar Variáveis de Ambiente
 
 ```bash
 cp .env.example .env
 ```
 
-3. Subir PostgreSQL (opcional via Docker):
+Edite o arquivo `.env`:
 
-```bash
-yarn db:up
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=order_manager
+
+# JWT
+JWT_SECRET=seu-segredo-aqui-min-32-chars
+JWT_USER=admin
+JWT_PASSWORD=admin123
+
+# Server
+PORT=3000
 ```
 
-4. Aplicar schema no banco:
+### Passo 3: Inicializar Banco de Dados
+
+**Opção A: Com Docker**
 
 ```bash
+yarn db:up      # Sobe container PostgreSQL
+yarn db:migrate # Aplica schema
+```
+
+**Opção B: PostgreSQL Local**
+
+```bash
+# Certifique-se de que o PostgreSQL está rodando
 yarn db:migrate
 ```
 
-5. Subir a API:
+### Passo 4: Executar Aplicação
 
 ```bash
-yarn dev
+yarn dev        # Modo desenvolvimento
+# ou
+yarn build      # Build de produção
+yarn start      # Executa build
 ```
 
-API disponível em `http://localhost:3000`.
+A API estará disponível em `http://localhost:3000`  
+Documentação Swagger em `http://localhost:3000/docs`
 
-### Observação sobre Docker
+---
 
-- O script SQL em `database/init` é executado automaticamente no **primeiro boot** de um volume novo (`postgres_data` vazio).
-- Se o volume já existir, para reaplicar schema você pode rodar `yarn db:migrate`.
-- Se você vai reconstruir tudo do zero, pode remover o volume e subir novamente.
+## 🔌 API
 
-## Comandos úteis
+### Autenticação
 
-```bash
-yarn dev          # desenvolvimento (watch)
-yarn build        # build TypeScript -> dist
-yarn start        # executa versão compilada
-yarn db:migrate   # aplica schema SQL no banco configurado
-yarn db:up        # sobe postgres via docker-compose.yml
-yarn db:down      # derruba containers do docker compose
-yarn db:logs      # logs do postgres
-yarn lint         # lint
-yarn lint:fix     # lint com correções
-yarn typecheck    # validação de tipos
-yarn check        # lint + typecheck
+Todos os endpoints de pedidos exigem header:
+
+```
+Authorization: Bearer <seu_token_jwt>
 ```
 
-## Endpoints
+Para obter token:
 
-### Health
-
-- `GET /health`
-
-### Auth
-
-- `POST /auth/login` - gera token JWT
-
-### Orders (protegidas por JWT)
-
-- `POST /order` - cria pedido
-- `GET /order/:orderId` - busca pedido por identificador
-- `GET /order/list` - lista pedidos
-- `PUT /order/:orderId` - atualiza pedido
-- `DELETE /order/:orderId` - remove pedido
-
-## Payload esperado para criação
+**POST** `/auth/login`
 
 ```json
+Request:
 {
-  "numeroPedido": "v10089015vdb-01",
-  "valorTotal": 10000,
-  "dataCriacao": "2023-07-19T12:24:11.5299601+00:00",
+  "username": "admin",
+  "password": "admin123"
+}
+
+Response (200):
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "tokenType": "Bearer"
+}
+```
+
+### Endpoints de Pedidos
+
+| Método   | Endpoint          | Autenticação | Descrição                 |
+| -------- | ----------------- | ------------ | ------------------------- |
+| `GET`    | `/health`         | ❌           | Health check da aplicação |
+| `POST`   | `/order`          | ✅           | Cria novo pedido          |
+| `GET`    | `/order/:orderId` | ✅           | Busca pedido específico   |
+| `GET`    | `/order/list`     | ✅           | Lista todos os pedidos    |
+| `PUT`    | `/order/:orderId` | ✅           | Atualiza pedido           |
+| `DELETE` | `/order/:orderId` | ✅           | Remove pedido             |
+
+### Exemplo de Criação de Pedido
+
+**Request**
+
+```http
+POST /order HTTP/1.1
+Host: localhost:3000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+
+{
+  "numeroPedido": "ORD-2024-001",
+  "valorTotal": 25000,
+  "dataCriacao": "2024-03-09T10:30:00.000Z",
   "items": [
     {
-      "idItem": "2434",
-      "quantidadeItem": 1,
-      "valorItem": 1000
+      "idItem": "1001",
+      "quantidadeItem": 5,
+      "valorItem": 5000
     }
   ]
 }
 ```
 
-### Transformação aplicada internamente
+**Response (201 Created)**
 
 ```json
 {
-  "orderId": "v10089015vdb-01",
-  "value": 10000,
-  "creationDate": "2023-07-19T12:24:11.529Z",
+  "orderId": "ORD-2024-001",
+  "value": 25000,
+  "creationDate": "2024-03-09T10:30:00.000Z",
   "items": [
     {
-      "productId": 2434,
-      "quantity": 1,
-      "price": 1000
+      "orderId": "ORD-2024-001",
+      "productId": 1001,
+      "quantity": 5,
+      "price": 5000
     }
   ]
 }
 ```
 
-## Exemplos de resposta
+### Tratamento de Erros
 
-### Sucesso (201 - POST /order)
-
-```json
-{
-  "orderId": "v10089015vdb-01",
-  "value": 10000,
-  "creationDate": "2023-07-19T12:24:11.529Z",
-  "items": [
-    {
-      "orderId": "v10089015vdb-01",
-      "productId": 2434,
-      "quantity": 1,
-      "price": 1000
-    }
-  ]
-}
-```
-
-### Erro de validação (400)
-
-```json
-{
-  "error": "INVALID_REQUEST",
-  "message": "Invalid request body.",
-  "details": [
-    {
-      "field": "items[0].idItem",
-      "description": "must match pattern \"^[0-9]+$\""
-    }
-  ]
-}
-```
-
-### Erro de negócio (409 - duplicidade)
-
-```json
-{
-  "error": "MODEL_ALREADY_EXISTS",
-  "message": "Order with identifier v10089015vdb-01 already exists.",
-  "details": null
-}
-```
-
-### Erro de recurso não encontrado (404)
+A API retorna erros estruturados:
 
 ```json
 {
   "error": "MODEL_NOT_FOUND",
-  "message": "Order with identifier nao-existe not found.",
+  "message": "Order with identifier XYZ not found.",
   "details": null
 }
 ```
 
-## Documentação
+Códigos de status:
 
-- Swagger UI: `http://localhost:3000/docs`
-- OpenAPI JSON: `http://localhost:3000/docs/json`
-- Postman collection: `docs/fastify-order-manager.postman_collection.json`
+- `400` - Dados inválidos
+- `401` - Não autenticado
+- `404` - Recurso não encontrado
+- `409` - Conflito (ex: pedido duplicado)
+- `500` - Erro interno
 
-### Fluxo da collection no Postman
+---
 
-1. Executar `Auth > Login` (salva `accessToken` automaticamente).
-2. Executar requests de `Orders` (todas usam `Bearer {{accessToken}}`).
+## 🗄 Modelo de Dados
 
-## Banco de dados
+### Schema PostgreSQL
 
-Tabelas utilizadas:
+```sql
+-- Tabela principal de pedidos
+CREATE TABLE "Order" (
+  "orderId" VARCHAR(255) PRIMARY KEY,
+  "value" INTEGER NOT NULL,
+  "creationDate" TIMESTAMP NOT NULL DEFAULT NOW()
+);
 
-- `Order`
-  - `orderId`
-  - `value`
-  - `creationDate`
-- `Items`
-  - `orderId`
-  - `productId` (inteiro)
-  - `quantity`
-  - `price`
+-- Tabela de itens do pedido
+CREATE TABLE "Items" (
+  "orderId" VARCHAR(255) REFERENCES "Order"("orderId") ON DELETE CASCADE,
+  "productId" INTEGER NOT NULL,
+  "quantity" INTEGER NOT NULL,
+  "price" INTEGER NOT NULL,
+  PRIMARY KEY ("orderId", "productId")
+);
+```
 
-Script SQL fonte:
+---
 
-- `database/init/001_create_tables.sql`
+## ✅ Qualidade
+
+### Verificações
+
+```bash
+yarn typecheck  # Verifica tipos TypeScript
+yarn lint       # Verifica regras ESLint
+yarn format     # Formata com Prettier
+```
+
+### Git Hooks
+
+O Husky está configurado para executar antes do commit:
+
+- Prettier em arquivos modificados
+- ESLint em arquivos TypeScript
+- Verificação de tipos
+
+---
+
+## 👨‍💻 Desenvolvimento
+
+### Scripts Disponíveis
+
+```bash
+# Desenvolvimento
+yarn dev          # Inicia com live reload
+
+# Build
+yarn build        # Compila TypeScript → JavaScript
+yarn start        # Executa versão compilada
+
+# Banco de Dados
+yarn db:up        # Inicia PostgreSQL (Docker)
+yarn db:down      # Para PostgreSQL
+yarn db:migrate   # Aplica migrations
+yarn db:logs      # Visualiza logs do banco
+
+# Qualidade
+yarn lint         # Executa ESLint
+yarn lint:fix     # Corrige problemas automaticamente
+yarn format       # Formata código com Prettier
+yarn typecheck    # Valida tipos TypeScript
+```
+
+### Documentação Adicional
+
+- **Swagger UI**: `http://localhost:3000/docs` - Interface interativa
+- **OpenAPI JSON**: `http://localhost:3000/docs/json` - Spec completo
+- **Postman**: `docs/fastify-order-manager.postman_collection.json`
+
+---
+
+## 📝 Licença
+
+Este projeto está sob a licença **ISC**.
+
+Desenvolvido por [Alkazuz](https://github.com/Alkazuz) para o desafio técnico da Jitterbit.
