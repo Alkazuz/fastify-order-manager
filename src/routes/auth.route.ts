@@ -1,7 +1,11 @@
 import type { FastifyPluginCallback } from 'fastify';
 
-import { InvalidRequestError } from '../errors/models/invalid-request.js';
-import { UnauthorizedError } from '../errors/models/unauthorized.js';
+import { AuthController } from '../controllers/auth.controller.js';
+import { AuthService } from '../modules/auth/auth.service.js';
+import type {
+  LoginInput,
+  LoginResponse,
+} from '../modules/auth/auth.service.js';
 
 const loginBodySchema = {
   type: 'object',
@@ -13,26 +17,11 @@ const loginBodySchema = {
   },
 } as const;
 
-interface LoginBody {
-  username: string;
-  password: string;
-}
-
-interface LoginResponse {
-  accessToken: string;
-  tokenType: 'Bearer';
-}
-
-function getExpectedUsername(): string {
-  return process.env.JWT_USER ?? 'admin';
-}
-
-function getExpectedPassword(): string {
-  return process.env.JWT_PASSWORD ?? 'admin123';
-}
-
 export const authRoutes: FastifyPluginCallback = (app, _options, done) => {
-  app.post<{ Body: LoginBody; Reply: LoginResponse }>(
+  const authService = new AuthService(app);
+  const authController = new AuthController(authService);
+
+  app.post<{ Body: LoginInput; Reply: LoginResponse }>(
     '/auth/login',
     {
       schema: {
@@ -42,31 +31,7 @@ export const authRoutes: FastifyPluginCallback = (app, _options, done) => {
       },
       attachValidation: true,
     },
-    async (request, reply) => {
-      if (request.validationError) {
-        throw InvalidRequestError.fromFastifyValidation(
-          request.validationError.validation,
-        );
-      }
-
-      const { username, password } = request.body;
-      if (
-        username !== getExpectedUsername() ||
-        password !== getExpectedPassword()
-      ) {
-        throw new UnauthorizedError('Invalid credentials.');
-      }
-
-      const accessToken = await reply.jwtSign({
-        sub: username,
-        username,
-      });
-
-      return reply.status(200).send({
-        accessToken,
-        tokenType: 'Bearer',
-      });
-    },
+    authController.login.bind(authController),
   );
 
   done();
